@@ -20,7 +20,7 @@ Bird and Shaydra!
 
 # A short description that will show up in this mod's entry in the mod list. This should be human readable and kept short
 # to prevent it from being cut off due to the limited space.
-short_description = "Replaces Link with Elle"
+short_description = "Replaces the Mountain Smithy NPCs"
 
 # Authors of this mod.
 authors = [ "BirdofLight" ]
@@ -59,3 +59,11 @@ data_reference_syms_files = [ "Zelda64RecompSyms/mm.us.rev1.datasyms.toml", "Zel
 
 # Additional files to include in the mod.
 additional_files = [ "thumb.png" ]
+
+[[manifest.config_options]]
+id = "smithy_background_switch"
+name = "Smithy Background Switch"
+description = "Background stuff still WIP"
+type = "Enum"
+options = [ "Off", "On" ]
+default = "Off"

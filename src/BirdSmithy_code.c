@@ -12,6 +12,10 @@
 #include "modding.h"
 #include "global.h"
 #include "ultra64.h"
+#include "segmented_address.h"
+#include "segment_symbols.h"
+#include "recomputils.h"
+#include "recompconfig.h"
 
 // Character Files
 #include "ShaydraSmithySkel.h"
@@ -22,6 +26,7 @@
 #include "gBoLSmithy_CornerWeapons_Blades.h"
 #include "gBoLSmithy_BurningDragonswordBlade.h"
 #include "gBoLSmithy_BurningDragonswordHilt.h"
+
 
 extern Gfx* object_kbt_Skel_00DEE8[];
 extern Gfx* object_kgy_Skel_00F910[];
@@ -34,6 +39,23 @@ extern Gfx* Z2_KAJIYA_room_00DL_006018[]; // Large Katana Hilt
 DECLARE_ROM_SEGMENT(object_kbt);
 DECLARE_ROM_SEGMENT(object_kgy);
 DECLARE_ROM_SEGMENT(Z2_KAJIYA_room_00);
+
+enum SmithyBackgroundEdits {
+        BACKGROUND_REPLACEMENT_OFF,
+        BACKGROUND_REPLACEMENT_ON,
+};
+
+// DECLARE_SEGMENT(scene_texture_02);
+
+PlayState* gPlay;
+RoomContext* gRoomCtx;
+s8 gRoomStatus;
+
+RECOMP_HOOK("Room_ProcessRoomRequest") void on_process_room_request(PlayState* play, RoomContext* roomCtx) {
+    gPlay = play;
+    gRoomCtx = roomCtx;
+    gRoomStatus = roomCtx->status;
+}
 
 void* gRam;
 uintptr_t gVrom;
@@ -60,26 +82,68 @@ RECOMP_HOOK_RETURN("DmaMgr_ProcessRequest") void after_dma() {
         gSegments[0x06] = old_segment_6;
     }
 
-        if (gVrom == SEGMENT_ROM_START(Z2_KAJIYA_room_00)) {
-        uintptr_t old_segment_6 = gSegments[0x06];
-        gSegments[0x06] = OS_K0_TO_PHYSICAL(gRam);
-
-        Gfx* to_patch_cornerweapons1 = Lib_SegmentedToVirtual(Z2_KAJIYA_room_00DL_009BB8);
-        gSPBranchList(to_patch_cornerweapons1 , gBoLSmithy_CornerWeapons);
-
-        Gfx* to_patch_cornerweapons2 = Lib_SegmentedToVirtual(Z2_KAJIYA_room_00DL_00A4D8);
-        gSPBranchList(to_patch_cornerweapons2 , gBoLSmithy_CornerWeapons_Blades);
-
-        Gfx* to_patch_largekatana1 = Lib_SegmentedToVirtual(Z2_KAJIYA_room_00DL_006018);
-        gSPBranchList(to_patch_largekatana1 , gBoLSmithy_BurningDragonswordHilt);
-
-        Gfx* to_patch_largekatana2 = Lib_SegmentedToVirtual(Z2_KAJIYA_room_00DL_00A7C0);
-        gSPBranchList(to_patch_largekatana2 , gBoLSmithy_BurningDragonswordBlade);
-
-        gSegments[0x06] = old_segment_6;
-    }
+//       if (gVrom == SEGMENT_ROM_START(Z2_KAJIYA_room_00)) {
+//       uintptr_t old_segment_6 = gSegments[0x06];
+//       gSegments[0x06] = OS_K0_TO_PHYSICAL(gRam);
+//
+//       Gfx* to_patch_cornerweapons1 = Lib_SegmentedToVirtual(Z2_KAJIYA_room_00DL_009BB8);
+//       gSPBranchList(to_patch_cornerweapons1 , gBoLSmithy_CornerWeapons);
+//
+//       Gfx* to_patch_cornerweapons2 = Lib_SegmentedToVirtual(Z2_KAJIYA_room_00DL_00A4D8);
+//       gSPBranchList(to_patch_cornerweapons2 , gBoLSmithy_CornerWeapons_Blades);
+//
+//       Gfx* to_patch_largekatana1 = Lib_SegmentedToVirtual(Z2_KAJIYA_room_00DL_006018);
+//       gSPBranchList(to_patch_largekatana1 , gBoLSmithy_BurningDragonswordHilt);
+//
+//       Gfx* to_patch_largekatana2 = Lib_SegmentedToVirtual(Z2_KAJIYA_room_00DL_00A7C0);
+//       gSPBranchList(to_patch_largekatana2 , gBoLSmithy_BurningDragonswordBlade);
+//
+//       gSegments[0x06] = old_segment_6;
+//   }
     gVrom = 0;
     gRam = NULL;
+}
+
+
+#define DEFINE_SCENE(name, _enumValue, textId, drawConfig, _restrictionFlags, _persistentCycleFlags) \
+    DECLARE_ROM_SEGMENT(name)
+
+#define DEFINE_SCENE_UNSET(_enumValue)
+#include "tables/scene_table.h"
+
+RECOMP_HOOK_RETURN("Room_ProcessRoomRequest") void after_process_room_request() {
+    // Thank you Reonu and thathypedperson!
+    // Check if the room was just loaded.
+    if (gRoomCtx->status == 0 && gRoomStatus == 1) {
+        // Check if it's the scene we're editing.
+        if (gPlay->sceneId == SCENE_KAJIYA) {
+            // Check if it's the room we're editing.
+            if (gRoomCtx->curRoom.num == 0) {
+                gSegments[0x03] = OS_K0_TO_PHYSICAL(gRoomCtx->curRoom.segment);
+                // Gfx* to_scan = (Gfx*)Lib_SegmentedToVirtual(Z2_KAJIYA_room_00DL_009BB8);
+                // replace_dl_commands_jump(to_scan, Z2_KAJIYA_room_00DL_009BB8, gBoLSmithy_CornerWeapons, ARRAY_COUNT(Z2_KAJIYA_room_00DL_009BB8));
+                switch (recomp_get_config_u32("smithy_background_switch"))
+                {
+                case BACKGROUND_REPLACEMENT_OFF:
+                        ;
+                        break;
+                case BACKGROUND_REPLACEMENT_ON: //Background replacement still WIP
+                        Gfx* to_patch_cornerweapons1 = Lib_SegmentedToVirtual(Z2_KAJIYA_room_00DL_009BB8);
+                        gSPBranchList(to_patch_cornerweapons1 , gBoLSmithy_CornerWeapons);
+
+                        Gfx* to_patch_cornerweapons2 = Lib_SegmentedToVirtual(Z2_KAJIYA_room_00DL_00A4D8);
+                        gSPBranchList(to_patch_cornerweapons2 , gBoLSmithy_CornerWeapons_Blades);
+
+                        Gfx* to_patch_largekatana1 = Lib_SegmentedToVirtual(Z2_KAJIYA_room_00DL_006018);
+                        gSPBranchList(to_patch_largekatana1 , gBoLSmithy_BurningDragonswordHilt);
+
+                        Gfx* to_patch_largekatana2 = Lib_SegmentedToVirtual(Z2_KAJIYA_room_00DL_00A7C0);
+                        gSPBranchList(to_patch_largekatana2 , gBoLSmithy_BurningDragonswordBlade);
+                        break;
+                }
+            }
+        }
+    }
 }
 
 // Text Replacement
