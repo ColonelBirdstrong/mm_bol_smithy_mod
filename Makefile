@@ -30,6 +30,8 @@ C_DEPS := $(addprefix $(BUILD_DIR)/, $(C_SRCS:.c=.d))
 
 $(TARGET): $(C_OBJS) $(LDSCRIPT) | $(BUILD_DIR)
 	$(LD) $(C_OBJS) $(LDFLAGS) -o $@
+	
+  RecompModTool.exe mod.toml "C:\Users\Satos\AppData\Local\Zelda64Recompiled\mods"
 
 $(BUILD_DIR) $(BUILD_DIR)/src:
 ifeq ($(OS),Windows_NT)
