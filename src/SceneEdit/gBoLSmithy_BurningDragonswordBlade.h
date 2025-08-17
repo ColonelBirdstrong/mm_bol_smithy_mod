@@ -1,7 +1,0 @@
-extern u64 gBoLSmithy_BurningDragonswordBlade_Blade_ci8[];
-extern u64 gBoLSmithy_BurningDragonswordBlade_Blade_pal_rgba16[];
-extern Vtx gBoLSmithy_BurningDragonswordBlade_gBoLSmithy_BurningDragonswordBlade_mesh_layer_Opaque_vtx_cull[8];
-extern Vtx gBoLSmithy_BurningDragonswordBlade_gBoLSmithy_BurningDragonswordBlade_mesh_layer_Opaque_vtx_0[52];
-extern Gfx gBoLSmithy_BurningDragonswordBlade_gBoLSmithy_BurningDragonswordBlade_mesh_layer_Opaque_tri_0[];
-extern Gfx mat_gBoLSmithy_BurningDragonswordBlade_Blade_f3d_layerOpaque[];
-extern Gfx gBoLSmithy_BurningDragonswordBlade[];
